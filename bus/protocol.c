@@ -179,6 +179,47 @@ struct gip_firmware_version {
 	__le16 minor;
 } __packed;
 
+struct guid_map {
+	const char *name;
+	const char *guid_str;
+};
+
+// See https://learn.microsoft.com/en-us/openspecs/windows_protocols/ms-gipusb/12feb7ea-3095-4dea-8288-ae66def54ecb
+static const struct guid_map guid_mappings[] = {
+	{ "Microsoft.Xbox.Input.IArcadeStick", "332054cc-a34b-41d5-a34a-a6a6711ec4b3" },
+	{ "Microsoft.Xbox.Input.IGamepad", "082e402c-07df-45e1-a5ab-a3127af197b5" },
+	{ "Microsoft.Xbox.Input.IProgrammableGamepad", "31c1034d-b5b7-4551-9813-8769d4a0e4f9" },
+	{ "Microsoft.Xbox.Input.IWheel", "646979cf-6b71-4e96-8df9-59e398d7420c" },
+	{ "Windows.Xbox.Input.GamepadEmu", "e2e5f1bc-a6e6-41a2-8f43-33cfa2510981" } // listed in published 'GIP Metadata Specification.docx'
+	{ "Windows.Xbox.Input.IConsoleFunctionMap", "ecddd2fe-d387-4294-bd96-1a712e3dc77d" },
+	{ "Windows.Xbox.Input.IController", "9776ff56-9bfd-4581-ad45-b645bba526d6" },
+	{ "Windows.Xbox.Input.ICustomAudio", "63fd9cc9-94ee-4b5d-9c4d-8b864c149cac" },
+	{ "Windows.Xbox.Input.IHeadset", "bc25d1a3-c24e-4992-9dda-ef4f123ef5dc" },
+    { "Windows.Xbox.Input.INavigationController", "b8f31fe7-7386-40e9-a9f8-2f21263acfb7" }
+};
+
+/*
+ * Helper function to format a guid_t into a canonical GUID string.
+ * The GUID is stored as a 16-byte array, so we need to extract and convert
+ * the first three fields from little-endian order.
+ */
+static void format_guid(char *buf, size_t buflen, const guid_t *guid)
+{
+	u8 *p = (u8 *)guid;
+	u32 data1 = le32_to_cpup((__le32 *)p);
+	u16 data2 = le16_to_cpup((__le16 *)(p + 4));
+	u16 data3 = le16_to_cpup((__le16 *)(p + 6));
+	u8 *data4 = p + 8;
+
+	snprintf(buf, buflen,
+		 "%08x-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x",
+		 data1, data2, data3,
+		 data4[0], data4[1],
+		 data4[2], data4[3],
+		 data4[4], data4[5],
+		 data4[6], data4[7]);
+}
+
 static int gip_encode_varint(u8 *buf, u32 val)
 {
 	int i;
@@ -959,7 +1000,25 @@ static int gip_parse_interfaces(struct gip_client *client,
 
 	for (i = 0; i < intfs->count; i++) {
 		guid = (guid_t *)intfs->data + i;
-		gip_dbg(client, "%s: guid=%pUb\n", __func__, guid);
+		char guid_buf[40];
+		const char *mapped_name = NULL;
+		int j;
+
+		format_guid(guid_buf, sizeof(guid_buf), guid);
+
+		for (j = 0; j < ARRAY_SIZE(guid_mappings); j++) {
+			if (!strcmp(guid_buf, guid_mappings[j].guid_str)) {
+				mapped_name = guid_mappings[j].name;
+				break;
+			}
+		}
+
+		if (mapped_name)
+			gip_dbg(client, "%s: guid=%s (%s)\n", __func__,
+				guid_buf, mapped_name);
+		else
+			gip_dbg(client, "%s: guid=%s (Unknown supported interface GUID)\n", __func__,
+				guid_buf);
 	}
 
 	client->interfaces = intfs;
