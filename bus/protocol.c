@@ -190,7 +190,7 @@ static const struct guid_map guid_mappings[] = {
 	{ "Microsoft.Xbox.Input.IGamepad", "082e402c-07df-45e1-a5ab-a3127af197b5" },
 	{ "Microsoft.Xbox.Input.IProgrammableGamepad", "31c1034d-b5b7-4551-9813-8769d4a0e4f9" },
 	{ "Microsoft.Xbox.Input.IWheel", "646979cf-6b71-4e96-8df9-59e398d7420c" },
-	{ "Windows.Xbox.Input.GamepadEmu", "e2e5f1bc-a6e6-41a2-8f43-33cfa2510981" } // listed in published 'GIP Metadata Specification.docx'
+	{ "Windows.Xbox.Input.GamepadEmu", "e2e5f1bc-a6e6-41a2-8f43-33cfa2510981" }, // listed in published 'GIP Metadata Specification.docx'
 	{ "Windows.Xbox.Input.IConsoleFunctionMap", "ecddd2fe-d387-4294-bd96-1a712e3dc77d" },
 	{ "Windows.Xbox.Input.IController", "9776ff56-9bfd-4581-ad45-b645bba526d6" },
 	{ "Windows.Xbox.Input.ICustomAudio", "63fd9cc9-94ee-4b5d-9c4d-8b864c149cac" },
